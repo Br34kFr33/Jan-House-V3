@@ -1,0 +1,176 @@
+Setup
+Linux
+ 
+Torrent auto uploader by Janhouse can probably be used on any Linux distribution (and it has been tested on CentOS, various Debian and Ubuntu versions and ArchLinux) but this guide explains setup on Debian based distributions (Debian and Ubuntu). If you are experienced enough, you can probably set it up on other distributions as well.
+Dependencies
+ 
+While the Torrent Uploader (Tuper) depends on Perl and various Perl modules, some bittorrent client is needed for actual downloading and uploading, and web server with PHP is required to use Web panel and browser plugin. Uploader is made to work better with rTorrent bittorrent client. And for the sake of simpleness of the setup, Apache2 will be used as the web server.
+ 
+If you are on a freshly installed box, make sure you first install sudo as user root.
+ 
+apt-get update
+apt-get install sudo
+ 
+Then install other dependencies that will be needed to compile rtorrent and perl modules.
+ 
+If some of the following packages doesn't exist (e.g. mktorrent or rar, you can remove them from the list and continue on, they are needed only for auto extract feature). While all of them should be there for later Ubuntu versions, Debian needs to have non-free and contrib repositories enabled. You can Google how to do it, or use this How To .
+ 
+If you are on older Debian version, like Debian Lenny, PHP 5.3 won't be in the package list. In this case you can use Dotdeb repository. Insturctions on adding it are here .
+ 
+sudo apt-get update
+sudo apt-get install subversion build-essential libtool automake openssl libsigc++-2.0-dev libncurses5-dev libncursesw5-dev libcurl4-openssl-dev libcppunit-dev irssi screen apache2 libapache2-mod-php5 php5 php5-sqlite libapache2-mod-scgi php5-xmlrpc git-core rar mktorrent libxml-parser-perl libexpat1-dev unzip
+ 
+Install Perl modules using cpan.
+ 
+Uploader needs these Perl modules: Config::Tiny Convert::Bencode Date:arse DBI DBD::SQLite Digest::SHA1 HTML::Strip IO::Async IO::Async::SSL JSON::XS Net::BitTorrent::File PAR URI::Escape WWW::Curl XML::RPC XML::Simple String::CRC32 Encode LWP LWP::UserAgent LWP:rotocol::https HTTP::Cookies HTTP::Cookies::Netscape HTTP::Request HTTP::Request::Common URI Net::RTorrent::Socket XML:arser
+ 
+First time starting cpan it will ask if you want it to configure automatically. Just press enter to accept default value (yes).
+ 
+cpan
+ 
+After it successfully configures cpan, cpan shell will open.
+ 
+cpan[1]>
+ 
+In it, execute the following command. It will keep asking if it should connect to the internet or install some additional modules. Just accept the default values by pressing enter.
+ 
+force install Config::Tiny Convert::Bencode Date:arse DBI DBD::SQLite Digest::SHA1 HTML::Strip IO::Async IO::Async::SSL JSON::XS Net::BitTorrent::File PAR URI::Escape WWW::Curl XML::RPC XML::Simple String::CRC32 Encode LWP LWP::UserAgent LWP:rotocol::https HTTP::Cookies HTTP::Cookies::Netscape HTTP::Request HTTP::Request::Common URI Net::RTorrent::Socket
+ 
+ 
+To quit cpan shell, after everything is installed, use "quit" command.
+ 
+Compiling rTorrent
+ 
+Let's make source directory
+ 
+cd ~/
+mkdir src
+ 
+Following are instructions for compiling rTorrent with xmlrpc-c from SVN.
+If errors come up during the setup, instead of SVN version, try using the stable version that can be downloaded from rTorrent web page .
+Or you could use pyroscope setup script that will get all the dependencies and install rTorrent with some additional patches for the user that executes the script. (This could help for older outdated distribution versions). Guide can be found here .
+ 
+Installing stable rTorrent:
+ 
+Install libtorrent
+ 
+wget http://libtorrent.rakshasa.no/...orrent-0.12.9.tar.gz
+tar zxvf libtorrent-0.12.9.tar.gz
+cd libtorrent-0.12.9
+./autogen.sh
+./configure
+make
+sudo make install
+cd ../
+ 
+Install xmlrpc-c
+ 
+svn co https://xmlrpc-c.svn.sourcefor...oot/xmlrpc-c/stable/ xmlrpc-c-svn
+cd xmlrpc-c-svn
+./configure --disable-cplusplus
+make
+sudo make install
+cd ../
+ 
+Install rtorrent with xmlrpc-c support
+ 
+wget http://libtorrent.rakshasa.no/...torrent-0.8.9.tar.gz
+tar zxvf rtorrent-0.8.9.tar.gz
+cd rtorrent-0.8.9
+./autogen.sh
+./configure --with-xmlrpc-c
+make
+sudo make install
+echo "include /usr/local/lib" | sudo tee -a /etc/ld.so.conf
+sudo ldconfig
+cd ../
+ 
+Apache (web panel)
+ 
+Enable mod_scgi by executing following command.
+ 
+sudo a2enmod scgi
+ 
+Add SGCI mounts to /etc/apache2/httpd.conf
+ 
+SCGIMount /rt1 127.0.0.1:5000
+SCGIMount /rt2 127.0.0.1:5001
+ 
+Create user that will be running Tuper and rTorrent. You can use whatever username and home directory you like but default configuration files use user "tup" with home directory /home/tup/ .
+ 
+sudo adduser tup
+ 
+Add Apache alias to default virtualhost by editing /etc/apache2/sites-available/default .
+Web files will be located in /home/tup/www/ directory.
+Add the following lines after "DocumentRoot" line.
+ 
+  Alias /auto/ "/home/tup/www/"
+  <Directory "/home/tup/www/">
+      Options Indexes MultiViews FollowSymLinks
+      AllowOverride All
+      Order allow,deny
+      Allow from all
+  </Directory>
+ 
+Create the web directory and set up permissions. Since Apache2 on Debian and Ubuntu runs from user www-data, chown it to that user.
+ 
+sudo mkdir -p /home/tup/www
+sudo chown www-data:tup /home/tup/www
+sudo chmod g+rxw /home/tup/www
+ 
+Restart Apache2. See if any errors come up. If there are errors, fix them and repeat the command.
+ 
+sudo /etc/init.d/apache2 restart
+ 
+If you now navigate to http://YOUR_HOST/auto/ , you should see empty directory index.
+ 
+Edit /etc/sudoers file, to allow www-data to execute rTorrent and Tuper status scripts as user tup without entering password.
+ 
+www-data ALL=(tup) NOPASSWD: /home/tup/tuper/status.sh, /home/tup/tuper/start-screen.sh
+ 
+Getting Tuper from SVN
+ 
+Login as user tup (you can switch to it quickly by doing "sudo -i -u tup").
+ 
+Check out tuper, web_panel and browse_plugin folders from SVN.
+SVN client will ask for password for user "tup". Do not enter it and press enter, it will then ask for different username. Enter your SVN username and password.
+ 
+cd /home/tup
+svn co https://svn.janhouse.lv/repos/tuper-v3/trunk/tuper/ tuper/
+svn co https://svn.janhouse.lv/repos/tuper-v3/trunk/web_panel/ www/web_panel/
+svn co https://svn.janhouse.lv/repos/tuper-v3/trunk/browser_plugin/ www/browser_plugin/
+ 
+Configuring Tuper
+ 
+Create needed directories and configuration files.
+ 
+For Tuper to store .torrent files, .nfo, database and cookiejar:
+ 
+mkdir -p storage/store
+ 
+Session directories for rtorrent, downloads and watch directories:
+ 
+mkdir .session1
+mkdir .session2
+mkdir downloads
+mkdir storage/watch1
+mkdir storage/watch2
+ 
+... must finish.
+ 
+cd tuper
+mv default.tuper.conf tuper.conf
+mv default.tuper.db ../storage/tuper.db
+mv default.tuper.filter.conf tuper.filter.conf
+ 
+cd ../www/web_panel
+mv default.config.inc.php config.inc.php
+ 
+cd ../browser_plugin
+mv default.upload_plugin_config.php upload_plugin_config.php
+ 
+
+
+
+
+

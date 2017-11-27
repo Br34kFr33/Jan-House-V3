@@ -1,0 +1,258 @@
+#############################################
+# Torrent auto uploader by Janhouse v3
+# http://www.janhouse.lv/uploader/
+#############################################
+ 
+******** Setup
+ 
+**** Linux
+ 
+If you are on ubuntu/debian based Linux:
+ 
+First install sudo from root user:
+ 
+apt-get install sudo
+ 
+Then the rest of the packages:
+ 
+sudo apt-get install subversion build-essential libtool automake openssl \
+libsigc++-2.0-dev libncurses5-dev libncursesw5-dev libcurl4-openssl-dev \
+libcppunit-dev irssi rar mktorrent libssl-dev libxml-parser-perl
+ 
+ 
+**** Windows (Cygwin)
+ 
+Download Cygwin from http://www.cygwin.com/.
+ 
+During installation of Cygwin, mark these extra packages:
+ 
+cppunit
+gcc
+gcc4
+gcc4-g++
+gcc-g++
+gettext
+gettext-devel
+glib2.0
+glib2.0-devel
+libcurl-devel
+libgcc1
+libncurses-devel
+libncursesw-devel
+libopenssl
+libtool
+lynx
+make
+ncurses
+ncursesw
+openssl-devel
+patch
+perl
+pkg-config
+subversion
+wget
+ 
+ 
+**** Common
+ 
+** Perl modules needed by v3:
+Config::Tiny
+Convert::Bencode
+Date::Parse
+DBI
+DBD::SQLite
+Digest::SHA1
+HTML::Strip
+IO::Async
+IO::Async::SSL
+JSON::XS
+Net::BitTorrent::File
+PAR
+URI::Escape
+WWW::Curl
+XML::RPC
+XML::Simple
+String::CRC32
+Encode
+LWP
+LWP::UserAgent
+LWP::Protocol::https
+HTTP::Cookies
+HTTP::Cookies::Netscape
+HTTP::Request
+HTTP::Request::Common
+URI
+Net::RTorrent::Socket
+XML::Parser
+ 
+They can be installed using cpan. Run cpan or sudo cpan and then execute
+force install [module_name] [module_name] [module_name]
+Replace [module_name] with module you are trying to set up.
+ 
+** Configuring uploader
+ 
+Checkout uploader using subversion:
+svn co https://svn.janhouse.lv/repos/tuper-v3/trunk/tuper/ tuper/
+ 
+Remove default. from default.* files inside tuper/ directory.
+If you were using uploader v2, you can use same database you used before.
+ 
+* Edit tuper.conf
+ 
+Enter your username and authorization key
+Change paths
+Add cookies
+Uncomment trackers that you will be using for uploading/downloading
+ 
+* Rename include/upload_*.default.config.pm to upload_*.config.pm and then
+edit it as needed.
+ 
+ 
+* Web panel setup
+ 
+To be able to read tuper-client status from web panel, web user must have
+permissions to execute status.sh and start-screen.sh scripts as user that is
+running tuper-client.
+ 
+This can be done by editing /etc/sudoers file, adding something similar to this:
+ 
+www-data ALL=(tup) NOPASSWD: /home/tup/tuper/status.sh, /home/tup/tuper/start-screen.sh
+ 
+www-data is user running web server.
+tup is user running tuper-client.
+Make sure the paths are correct for your setup.
+ 
+ 
+**** Adding new upload download scripts
+ 
+Feel free to use existing download and upload scripts to add new ones.
+Reading some perl tutorial and perl regexp guide could help understanding
+how things work.
+ 
+ 
+******** Usage
+ 
+cd inside tuper directory and run ./run-tuper-client.sh
+Check if it is able to connect. If connection is established it will start
+sending keepalive ping and pong messages.
+ 
+On Linux to start tuper-client in background you can use screen program.
+First time when starting it, write:
+screen -S tuper
+ 
+It will start screen session. Change directory to tuper/, run tuper client
+and disconnect from screen session by pressing Ctrl+A and then Ctrl+D on your
+keyboard.
+ 
+To reconnect to already running screen session, write:
+screen -dr tuper
+ 
+To list running screen sessions, write:
+screen -list
+ 
+ 
+Tuper client is backend that gets commands from torrent client, web interface
+or announce-helper script.
+ 
+**** Downloading
+ 
+To send download command using command line, execute:
+./tuper.sh get [DOWNLOAD_CODE] [TORRENT_ID] [UPLOAD_CODE]
+Replace [DOWNLOAD_CODE] with download script name, for example scc, gft, rtt
+or fro.
+Replace [TORRENT_ID] with torrent ID number on download tracker.
+Last parameter [UPLOAD_CODE] is replaced by upload script name but it is
+OPTIONAL.
+"get" will keep the script open until the execution is finished. To send it
+to background and not wait, replace "get" with "aget". For example:
+./tuper.sh aget scc 123
+ 
+**** Uploading
+ 
+Uploading is normally done automatically when command is recieved from torrent
+client. In case you want to do it manually to see output or upload had
+failed before, use:
+./tuper.sh upload [INFO_HASH] [UPLOAD_CODE]
+Replace [INFO_HASH] with torrents unique info hash.
+[UPLOAD_CODE] is optional and makes it upload only to single tracker in case
+torrent was added for uploading to multiple trackers.
+ 
+Same as downloading, "upload" stays open until upload script finishes
+executing. To send it to background use "aupload" instead of "upload". Example:
+./tuper.sh upload b28cdf88dabf6c29259f8a12ea196e6d89ac6697
+ 
+ 
+**** Eliminator
+ 
+Eliminator is the part of tuper-client that removes torrents "the smart way".
+In order to do that it must know time when torrent was added for downloading,
+when it finished downloading and when it was added in upload rtorrent for
+seeding.
+It is done by configuring rtorrent/utorrent to execute Eliminator script when
+the starte of the torrent has changed.
+ 
+Until full v2 Eliminator is ported to v3, these commands are available:
+status
+astatus
+ 
+"astatus" is the same as "status" but doesn't wait for reply from the client
+(runs in background).
+Both commands require 2 parameters - action and infohash.
+Action can be: started, uploaded, seeded. Infohash parameter is infohash for
+torrent that you want to change status for.
+ 
+Manyally executing these commands look something like this:
+./tuper.sh status started INFOHASH_HERE
+ 
+ 
+**** Filters
+ 
+To enable automatic downloading you must rename default.tuper.filter.conf to
+tuper.filter.conf and edit is as neccessary.
+ 
+tuper.filter.conf contains download source configuration blocks.
+Each block contain category speciffic configuration and switch to enable or
+disable speciffic download source.
+ 
+Example:
+[scc]
+enable=0
+all=0
+e2=0
+c2=Anime
+m2=.*
+n2=
+ 
+To enable downloading from source "scc", change enable=0 to enable=1 and also
+enable each category you want to download from.
+ 
+Every category "block" has 4 lines that start with single letter "e", "c", "m"
+or "n" and is preceeded by number.
+ 
+Letters are explained like this:
+"e " is for "category enabled"
+"c" is for "category name"
+"m" is for "regexp MATCH"
+"n" is for "regexp NOT TO MATCH"
+ 
+Note:
+If "e" is enabled (set to 1) and "m" is empty, it will download everything from
+that category. But if "n" is empty, it will not check the NOT match.
+ 
+"m" and "n" can use symbols used in regular expressions like *+(). etc.
+For exaple to download HD releases from SCC category Movies but do not download
+releases from group "GROUP" we use something like this:
+ 
+[scc]
+enable=1
+all=0
+ 
+e1=1
+c1=Movies
+m1=(720p|1080p)
+n1=-GROUP$
+ 
+ 
+********************************************************************************
+More new information about Eliminator and other functions to come...
+

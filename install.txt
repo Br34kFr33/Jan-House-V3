@@ -1,0 +1,616 @@
+This guide assumes a few things:
+- Ubuntu 10.04
+- You are connecting via Putty
+- After you are done editing via nano you know to hit Ctrl-O, Enter, Ctrl-X
+- This is on a remote server by OVH, Leasweb, etc... and you have root access
+- You are not retarded and can follow insructions :)
+- You know this will not setup all configurations for your specific site and/or your sources. This is a stepping stone.
+- You do not have to do all of the things in this guide if you do not want to. Pick and choose if youd like.
+ 
+This guide shows you how to setup and configure for:
+- Setup root password, Delete Authorized Keys, Update System
+- Add user tup, Set visudo permissions
+- SSH setup
+- Windows Auto Logon SSH Tunnel
+- Install Packages
+- Setup tinyproxy (Proxy server to hide your IP, and this setup does so as Anonymous)
+- Ubuntu Desktop - Gnome No Recommended Packages
+- FreeNX
+- CPAN (for tuper client)
+- Tuper Client
+- rTorrent - libtorrent - xmlrpc
+- ruTorrent
+- Apache
+- Webmin
+- FTP (SFTP only)
+- Linux Firewall
+- Fail2Ban
+ 
+- This guide is just an edit to a thread I made on T-I, I just added Jans Wiki to it for the auto uploader.
+- This guide is for those having troubles understanding how servers work and/or are new to Linux.
+- There are many, many ways to configure a server with the packages in this guide. If you have a better/newer/easier way for any of them leave a comment and maybe it will replace mine.
+- ...and lastly I hope this helps most n00bs in setting up thier servers and getting that much closer to learning how tuper works.
+- I lied....and now lastly....Thank You Jans for the awesome uploader, and to dent and all other who help out as well in forums in problem solving/reporting. :)
+ 
+Now....On with the show....
+ 
+#Setup root password, Delete Authorized Keys, Update System
+- sudo passwd
+- ls .ssh/authorized_keys2
+- rm .ssh/authorized_keys2
+- apt-get update && apt-get upgrade
+- apt-get clean && apt-get autoclean
+ 
+#Add user tup, Set visudo permissions
+- adduser tup
+- visudo
+root ALL=(ALL) ALL
+tup ALL=(ALL) NOPASSWD: ALL
+www-data ALL=(ALL) NOPASSWD: ALL
+nx ALL=(ALL) NOPASSWD: ALL
+ 
+#SSH setup
+- sudo nano /etc/ssh/sshd_config
+Port 22002
+Protocol 2
+PermitRootLogin no
+X11Forwarding no
+UseDNS no
+AllowUsers tup
+- sudo service ssh reload
+ 
+#Windows Auto Logon SSH Tunnel
+ 
+- MyEnTunnel
+ 
+On your Windows machine open your internet browser and go to
+http://nemesis2.qx.net/pages/MyEnTunnel
+Scroll down and download the latest Stable version.
+ 
+-Install it as Windows Service
+-Open MyEnTunnel
+-Click the settings tab
+-Set your settings as if it were Putty
+SSH Server = <Server IP address>
+SSH Port = <Servers SSH Port>
+Username = <Your Normal User on the Server>
+Passphrase = <Your Normal User's Password on the Server>
+Port = <Whatever port you want your tunnel to be under. I set mine to the same as the SSH Port on the server for less confusion>
+-Check mark whatever boxes youd like. Enable Dynamic Socks MUST be checked.
+ 
+Other notable ones would be:
+ 
+Connect on Startup
+Reconnect on Failure
+Infinite Retry Attempts
+ 
+-Click Connect, and after it has connected click Save, and then Hide. Now it is in your systray, and will always auto reconnect if dropped.
+-Any program you want to use this tunnel (Firefox, uTorrent, mIRC, etc...) you must set it to use a SOCKS5 proxy with the IP address of 127.0.0.1 and the Port for
+ 
+whatever you chose MyEnTunnel to use.
+ 
+#Install Packages
+- sudo apt-get update && sudo apt-get upgrade
+- sudo apt-get clean && sudo apt-get autoclean
+- sudo apt-get install apache2 apache2.2-common apache2-utils aptitude apt-show-versions autoconf automake autotools-dev binutils build-essential bzip2 ca-certificates comerr-dev cpp cpp-4.1 curl dpkg-dev fail2ban file firestarter g++ g++-4.1 gawk gcc gcc-4.1 git-core htop irssi libapache2-mod-php5 libapache2-mod-scgi libapr1 libaprutil1 libapt-pkg-perl libauthen-pam-perl libc6-dev libcppunit-dev libcurl3 libcurl4-openssl-dev libexpat1 libexpat1-dev libidn11 libidn11-dev libkdb5-4 libgssrpc4 libkrb5-dev libmagic1 libncurses5 libncurses5-dev libncursesw5-dev libneon26 libnet-ssleay-perl libpam-runtime libio-pty-perl libpcre3 libpq5 libsigc++-2.0-dev libsqlite0 libsqlite3-0 libssl-dev libssp0-dev libstdc++6-4.1-dev libsvn1 libtool libwww-perl libxml2 libxml-parser-perl linux-libc-dev lynx m4 make mktorrent mime-support ntp ntpdate openssl patch perl perl-base perl-modules php5 php5-cgi php5-cli php5-common php5-curl php5-dev php5-geoip php5-sqlite php5-xmlrpc pkg-config python python-minimal python-scgi rar screen sqlite ssl-cert subversion tinyproxy ucf unrar unzip zlib1g-dev
+ 
+#Setup tinyproxy
+- sudo apt-get update && sudo apt-get upgrade
+- sudo apt-get clean && sudo apt-get autoclean
+- sudo nano /etc/tinyproxy.conf
+Port 32002
+BindSame yes
+ErrorFile 404 "/usr/share/tinyproxy/404.html"
+ErrorFile 400 "/usr/share/tinyproxy/400.html"
+ErrorFile 503 "/usr/share/tinyproxy/503.html"
+ErrorFile 403 "/usr/share/tinyproxy/403.html"
+ErrorFile 408 "/usr/share/tinyproxy/408.html"
+LogLevel Critical
+XTinyproxy No
+Allow 127.0.0.1
+Allow XXX.XXX.XXX.XXX
+DisableViaHeader Yes
+#ConnectPort 443
+#ConnectPort 563
+- sudo service tinyproxy start
+ 
+#Ubuntu Desktop - Gnome No Recommended Packages
+- sudo apt-get update && sudo apt-get upgrade
+- sudo apt-get clean && sudo apt-get autoclean
+- sudo aptitude install --without-recommends ubuntu-desktop
+ 
+#FreeNX
+- sudo apt-get update && sudo apt-get upgrade
+- sudo apt-get clean && sudo apt-get autoclean
+- sudo add-apt-repository ppa:freenx-team
+- sudo apt-get install python-software-properties
+- sudo apt-get install freenx
+- wget https://bugs.launchpad.net/freenx-server/+bug/576359/+attachment/1378450/+files/nxsetup.tar.gz
+- tar xvf nxsetup.tar.gz
+sudo cp nxsetup /usr/lib/nx/nxsetup
+- sudo /usr/lib/nx/nxsetup --install
+ 
+Now install NXclient on your home machine and connect through your SSH port
+#Unlimited Open Files
+- su root
+- nano /etc/pam.d/su
+session required pam_limits.so
+- nano /etc/security/limits.conf
+ 
+    soft nofile 100000
+    hard nofile 100000
+    -reboot
+ 
+#CPAN
+-sudo cpan
+ 
+Hit Enter when asked to accept defaults
+ 
+-force install Config::Tiny Convert::Bencode Date::Parse DBI DBD::SQLite Digest::SHA1 HTML::Strip IO::Async IO::Async::SSL JSON::XS Net::BitTorrent::File PAR URI::Escape WWW::Curl XML::RPC XML::Simple String::CRC32 Encode LWP LWP::UserAgent LWP::Protocol::https HTTP::Cookies HTTP::Cookies::Netscape HTTP::Request HTTP::Request::Common URI Net::RTorrent::Socket ExtUtils::Constant Socket
+ 
+Hit Enter to accept and install and other dependency modules when asked
+ 
+-exit
+ 
+#Tuper Client
+- cd /home/tup
+- svn co https://svn.janhouse.lv/repos/tuper-v3/trunk/tuper/ tuper/
+- svn co https://svn.janhouse.lv/repos/tuper-v3/trunk/web_panel/ www/web_panel/
+- svn co https://svn.janhouse.lv/repos/tuper-v3/trunk/browser_plugin/ www/browser_plugin/
+ 
+When asked for SVN user and pass enter them.
+Store them if youd like as well.
+ 
+- mkdir storage
+- cd storage && mkdir store watch1 watch2 && cd ~
+- mkdir .session1 .session2 downloads
+- cd tuper
+- mv default.tuper.conf tuper.conf
+- mv default.tuper.db ../storage/tuper.db
+- mv default.tuper.filter.conf tuper.filter.conf
+- cd ../www/web_panel
+- mv default.config.inc.php config.inc.php
+- cd ../browser_plugin
+- mv default.upload_plugin_config.php upload_plugin_config.php
+- nano upload_plugin_config.php
+ 
+Change the password to something storng, for example:
+$access_key="EK&fY308VfdP";
+ 
+- nano /home/tup/tuper/tuper.conf
+ 
+Add your username and key given to you by Jans:
+username=
+key=
+ 
+#rTorrent - libtorrent - xmlrpc
+- cd ~ && mkdir apps && cd apps
+- svn co https://xmlrpc-c.svn.sourceforge.net/svnroot/xmlrpc-c/advanced xmlrpc-c
+- wget http://libtorrent.rakshasa.no/downloads/libtorrent-0.13.2.tar.gz
+- wget http://libtorrent.rakshasa.no/downloads/rtorrent-0.9.2.tar.gz
+- tar zxfv libtorrent-0.13.2.tar.gz
+- tar zxfv rtorrent-0.9.2.tar.gz
+- cd xmlrpc-c
+- ./configure && make && sudo make install
+- cd ../libtorrent-0.13.2
+- ./configure && make && sudo make install
+- cd ../rtorrent-0.9.2
+- ./configure --with-xmlrpc-c && make && sudo make install
+- sudo ldconfig && cd ..
+- rm *.tar.gz
+- cd ~ && mkdir rtorrent && cd rtorrent
+- mkdir .session downloads torrents
+- cd ~ && nano .rtorrent.rc
+#bind = 127.0.0.1
+#ip = 127.0.0.1
+encryption=allow_incoming,try_outgoing,enable_retry
+upload_rate = 30000
+download_rate = 95000
+use_udp_trackers = no
+ 
+min_peers = 500
+max_peers = 500
+min_peers_seed = 100
+max_peers_seed = 500
+max_uploads = 300
+ 
+directory = /home/tup/downloads/
+session = /home/tup/.session1/
+ 
+schedule = watch_directory,5,5,load_start=/home/tup/storage/watch1/*.torrent
+schedule = tied_directory,5,5,start_tied=
+schedule = untied_directory,5,5,close_untied=
+ 
+system.method.set_key = event.download.inserted_new,mark_start,"execute=/home/tup/tuper/tuper.sh,astatus,started,$d.get_hash="
+system.method.set_key = event.download.finished,mark_fin,"execute=/home/tup/tuper/tuper.sh,astatus,uploaded,$d.get_hash="
+system.method.set_key = event.download.finished,notify_me,"execute=/home/tup/tuper/tuper.sh,aupload,$d.get_hash="
+system.method.set_key = event.download.erased,mark_erase,"execute=/home/tup/tuper/tuper.sh,adel,down,$d.get_hash="
+ 
+port_range = 21006-21010
+check_hash = no
+encryption = allow_incoming,enable_retry,prefer_plaintext
+ 
+#hash_read_ahead = 8
+#hash_max_tries = 5
+#hash_interval = 10
+ 
+    Enable the default ratio group.
+    ratio.enable=
+ 
+    Change the limits, the defaults should be sufficient.
+    ratio.min.set=120
+    ratio.max.set=200
+    ratio.upload.set=20M
+ 
+    Changing the command triggered when the ratio is reached.
+    system.method.set = group.seeding.ratio.command, d.erase=
+ 
+scgi_port = localhost:5000
+#scgi_local = /home/tup/rpc.socket
+ 
+dht = disable
+ 
+peer_exchange = no
+ 
+- nano .rtorrent2.rc
+#bind = 127.0.0.1
+#ip = 127.0.0.1
+encryption=allow_incoming,try_outgoing,enable_retry
+upload_rate = 95000
+download_rate = 15000
+use_udp_trackers = no
+ 
+min_peers = 500
+max_peers = 500
+min_peers_seed = 500
+max_peers_seed = 500
+max_uploads = 500
+ 
+directory = /home/tup/downloads/
+session = /home/tup/.session2/
+ 
+schedule = watch_directory,5,5,load_start=/home/tup/storage/watch2/*.torrent
+schedule = tied_directory,5,5,start_tied=
+schedule = untied_directory,5,5,close_untied=
+ 
+system.method.set_key = event.download.inserted_new,mark_seeded,"execute=/home/tup/tuper/tuper.sh,astatus,seeded,$d.get_hash="
+system.method.set_key = event.download.erased,mark_erase,"execute=/home/tup/tuper/tuper.sh,adel,up,$d.get_hash="
+ 
+port_range = 21001-21005
+check_hash = no
+encryption = allow_incoming,enable_retry,prefer_plaintext
+ 
+#hash_read_ahead = 8
+#hash_max_tries = 5
+#hash_interval = 10
+ 
+    Enable the default ratio group.
+    #ratio.enable=
+ 
+    Change the limits, the defaults should be sufficient.
+    ratio.min.set=850
+    ratio.max.set=1200
+    ratio.upload.set=250M
+ 
+    Changing the command triggered when the ratio is reached.
+    system.method.set = group.seeding.ratio.command, d.erase=
+ 
+scgi_port = localhost:5001
+#scgi_local = /home/tup/rpc.socket
+ 
+dht = disable
+ 
+peer_exchange = no
+- screen dmS rtorrent1 rtorrent -n -o import=~/.rtorrent.rc
+screen -dmS rtorrent2 rtorrent -n -o import=~/.rtorrent2.rc
+ 
+#ruTorrent
+- cd ~ && mkdir www && cd www
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/rutorrent
+- mv rutorrent rtorrent1
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/rutorrent
+- mv rutorrent rtorrent2
+- cd rtorrent1/plugins
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/throttle
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/ratio
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/Diskspace
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/Source
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/Data
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/Cpuload
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/Theme
+- sudo svn co http://rutorrent.googlecode.com/svn/trunk/plugins/Data
+- cd ../ && cp -R plugins /home/tup/www/rtorrent2/
+ 
+#Set permissions
+- cd ~ && sudo chown R tup:tup /home/tup
+cd ~ && sudo chown -R www-data:www-data www && sudo chmod -R 777 rutorrent
+ 
+#Apache
+- sudo a2enmod ssl
+- sudo a2enmod auth_digest
+- sudo a2enmod scgi
+- sudo nano /etc/apache2/apache2.conf
+ 
+Add these lines lines at the end:
+SCGIMount /rt1 127.0.0.1:5000
+SCGIMount /rt2 127.0.0.1:5001
+servername localhost
+- openssl req $@ new -x509 -days 365 -nodes -out /etc/apache2/apache.pem -keyout /etc/apache2/apache.pem
+chmod 600 /etc/apache2/apache.pem
+- sudo htdigest c /etc/apache2/passwords gods tup
+sudo nano /etc/apache2/sites-available/default
+ 
+Replace all instances of <servername or IP> with your real servername or IP
+ 
+<VirtualHost *:80>
+ServerAdmin webmaster@localhost
+ 
+DocumentRoot /home/tup/www/
+<Directory />
+Options FollowSymLinks
+AllowOverride None
+</Directory>
+<Directory /home/tup/www/>
+Options Indexes FollowSymLinks MultiViews
+AllowOverride None
+Order allow,deny
+allow from all
+</Directory>
+ 
+ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
+<Directory "/usr/lib/cgi-bin">
+AllowOverride None
+Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+Order allow,deny
+Allow from all
+</Directory>
+ 
+ErrorLog /var/log/apache2/error.log
+ 
+    Possible values include: debug, info, notice, warn, error, crit,
+    alert, emerg.
+    LogLevel warn
+ 
+CustomLog /var/log/apache2/access.log combined
+ 
+Alias /doc/ "/usr/share/doc/"
+<Directory "/usr/share/doc/">
+Options Indexes MultiViews FollowSymLinks
+AllowOverride None
+Order deny,allow
+Deny from all
+Allow from 127.0.0.0/255.0.0.0 ::1/128
+</Directory>
+ 
+<Location /rtorrent1>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/rtorrent1/ http://<servername or IP>/rtorrent1
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/rtorrent1"
+</Location>
+ 
+<Location /rtorrent2>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/rtorrent2/ http://<servername or IP>/rtorrent2
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/rtorrent2"
+</Location>
+ 
+<Location /web_panel>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/web_panel/ http://<servername or IP>/web_panel
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/web_panel"
+</Location>
+ 
+<Location /browser_plugin>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/browser_plugin/ http://<servername or IP>/browser_plugin
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/browser_plugin"
+</Location>
+ 
+</VirtualHost>
+ 
+<VirtualHost *:443>
+ServerAdmin webmaster@localhost
+ 
+SSLEngine on
+SSLCertificateFile /etc/apache2/apache.pem
+ 
+DocumentRoot /home/tup/www/
+<Directory />
+Options FollowSymLinks
+AllowOverride None
+</Directory>
+<Directory /home/tup/www/>
+Options Indexes FollowSymLinks MultiViews
+AllowOverride None
+Order allow,deny
+allow from all
+</Directory>
+ 
+ScriptAlias /cgi-bin/ /usr/lib/cgi-bin/
+<Directory "/usr/lib/cgi-bin">
+AllowOverride None
+Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+Order allow,deny
+Allow from all
+</Directory>
+ 
+ErrorLog /var/log/apache2/error.log
+ 
+    Possible values include: debug, info, notice, warn, error, crit,
+    alert, emerg.
+    LogLevel warn
+ 
+CustomLog /var/log/apache2/access.log combined
+ 
+Alias /doc/ "/usr/share/doc/"
+<Directory "/usr/share/doc/">
+Options Indexes MultiViews FollowSymLinks
+AllowOverride None
+Order deny,allow
+Deny from all
+Allow from 127.0.0.0/255.0.0.0 ::1/128
+</Directory>
+<Location /rtorrent1>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/rtorrent1/ http://<servername or IP>/rtorrent1
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/rtorrent1"
+</Location>
+<Location /rtorrent2>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/rtorrent2/ http://<servername or IP>/rtorrent2
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/rtorrent2"
+</Location>
+<Location /web_panel>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/web_panel/ http://<servername or IP>/web_panel
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/web_panel"
+</Location>
+<Location /browser_plugin>
+AuthType Digest
+AuthName "gods"
+AuthDigestDomain /home/tup/www/browser_plugin/ http://<servername or IP>/browser_plugin
+ 
+AuthDigestProvider file
+AuthUserFile /etc/apache2/passwords
+Require valid-user
+SetEnv R_ENV "/home/tup/www/browser_plugin"
+</Location>
+</VirtualHost>
+- sudo a2ensite default-ssl
+- sudo service apache2 reload
+Check that everything is working by opening a browser and going to:
+ 
+http://<servername or IP>/rtorrent1
+http://<servername or IP>/rtorrent2
+http://<servername or IP>/web_panel
+ 
+#Webmin
+- sudo nano /etc/apt/sources.list
+deb http://download.webmin.com/download/repository sarge contrib
+- wget http://www.webmin.com/jcameron-key.asc
+- sudo apt-key add jcameron-key.asc
+- sudo apt-get update
+- sudo apt-get install webmin
+https://<servername or IP>:10000
+ 
+#SFTP
+ 
+Connect via your FTP client. Set it to use SFTP and connect through your SSH, just like you would with Putty.
+ 
+#Linux Firewall
+ 
+Now it is time to set up the linux firewall to close all the ports other than the ones we need. This is where the GUI will come in handy for those who do not
+ 
+understand IPTables.
+ 
+- sudo apt-get update && sudo apt-get upgrade
+- sudo apt-get clean && sudo apt-get auto-clean
+ 
+Connect with your NX client on your windows machine.
+- System > Administration > Firestarter
+- When you launch firestarter for the first time, it will take you through a setup wizard.
+-Click forward, and you will be able to select the network device. This device you must choose correctly. There may be a list of them. On almost all setups you will
+ 
+chose eth0.
+-Select eth0
+-Do not check the other boxes.
+-Click Forward, and then click Forward again.
+-Uncheck to start the Firewall now. You must uncheck this or it will lock out all ports when you click Save.
+-Click the Policy tab
+-Make sure that Editing is set to Inboud Traffic Policy
+-Right click under Allow Service, and you will do this individually for all your ports you need open.
+Port = 32002, 80, 443, 10000, 57001
+Anyone should be set for 57001
+All others are to be set to your IP, unless you have a Dynamic IP address in which case you should set all of these ports to Anyone.
+ 
+#Fail2Ban
+- su root
+- apt-get update && apt-get upgrade
+- apt-get clean && apt-get autoclean
+- nano /etc/fail2ban/jail.conf
+ignoreip = 127.0.0.1 Your_Home_IP
+ 
+EX : ignoreip = 127.0.0.1 24.127.*.* 192.168.1.*
+You can use as many IP's as you want. Just use a space in between each IP address. If you have a Dynamic IP, it would be a good idea to accept the whole range like i gave in the example above.
+ 
+[ssh]
+enabled = true
+port = ssh
+maxretry = 3
+ 
+[Apache]
+All Apache modules should be changed to yes.
+ 
+Scroll to the bottom of jail.conf and add these lines to monitor Webmin
+ 
+[webmin-auth]
+enabled = true
+port = 10000
+filter = webmin-auth
+logpath = /var/log/auth.log
+maxretry = 3
+ 
+- service fail2ban restart
+ 
+To delete 1 rules:
+- iptables -F fail2ban-ssh
+ 
+To delete just 1 IP rule:
+- iptables -D fail2ban-ssh host-name/ip DROP
+ 
+#Update/Upgrade and Reboot
+- apt-get update && apt-get upgrade
+- apt-get clean && apt-get autoclean
+- reboot
+ 
+...and you're done
+ 
+Replies (2)
+Comment
+RE: Server setup for n00bs - Added by Janhouse 18 days ago
+ 
+Nice, this looks quite good. :)
+I didn't like the server setup part about visudo and the NOPASSWD. (!)
+Comment
+RE: Server setup for n00bs - Added by voidale 18 days ago
+ 
+Installing the script seems to be easy the hard part is to setup download/upload scripts no good guides for it :( but nice work nonetheless
+ 
+(1-2/2)
+ 
+Reply
